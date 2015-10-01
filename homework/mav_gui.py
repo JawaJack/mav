@@ -17,8 +17,8 @@ from time import sleep
 # Use "Pythonic" (and PyQt5-compatible) `glue classes <http://pyqt.sourceforge.net/Docs/PyQt4/incompatible_apis.html>`_.
 # This must be done before importing from PyQt4.
 import sip
-sip.setapi('QString', 2)
-sip.setapi('QVariant', 2)
+#sip.setapi('QString', 2)
+#sip.setapi('QVariant', 2)
 
 from PyQt4.QtGui import QApplication, QDialog, QIntValidator
 from PyQt4.QtCore import QTimer, QThread, QObject, pyqtSignal, pyqtSlot
@@ -83,6 +83,8 @@ class MyDialog(QDialog):
         self._timer.timeout.connect(self._onTimeout)
         self._timer.setSingleShot(True)
         self._timer.start(3000)
+        
+        
 
     @pyqtSlot()
     def _onTimeout(self):
