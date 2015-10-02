@@ -17,8 +17,8 @@ from time import sleep
 # Use "Pythonic" (and PyQt5-compatible) `glue classes <http://pyqt.sourceforge.net/Docs/PyQt4/incompatible_apis.html>`_.
 # This must be done before importing from PyQt4.
 import sip
-#sip.setapi('QString', 2)
-#sip.setapi('QVariant', 2)
+sip.setapi('QString', 2)
+sip.setapi('QVariant', 2)
 
 from PyQt4.QtGui import QApplication, QDialog, QIntValidator
 from PyQt4.QtCore import QTimer, QThread, QObject, pyqtSignal, pyqtSlot
@@ -62,9 +62,12 @@ class MyDialog(QDialog):
         # this class.
         uic.loadUi(join(dirname(__file__), 'mav_gui.ui'), self)
 
-        # Only allow numbers between 0 and 99 for the lien edits.
+        # Only allow numbers between 0 and 99 for the line edits.
         flyTimeValidator = QIntValidator(0, 99, self)
         self.leFlyTime.setValidator(flyTimeValidator)
+
+        chargeTimeValidator = QIntValidator(0, 99, self)
+        self.leChargeTime.setValidator(chargeTimeValidator)
 
         # Create a separate thread
         self._thread = QThread()
@@ -89,15 +92,27 @@ class MyDialog(QDialog):
     @pyqtSlot()
     def _onTimeout(self):
         self.hsFlyTime.setValue(50)
+        self.hsChargeTime.setValue(50)
 
     @pyqtSlot(int)
     def on_hsFlyTime_valueChanged(self, value):
         self.leFlyTime.setText(str(value))
         self._worker.run.emit(1.5)
+        
+    @pyqtSlot(int)
+    def on_hsChargeTime_valueChanged(self, value):
+        self.leChargeTime.setText(str(value))
+        self._worker.run.emit(1.5)
 
     @pyqtSlot()
     def on_leFlyTime_editingFinished(self):
         self.hsFlyTime.setValue(int(self.leFlyTime.text()))
+        
+    @pyqtSlot()
+    def on_leChargeTime_editingFinished(self):
+        self.hsChargeTime.setValue(int(self.leChargeTime.text()))
+        
+    
 
     # Free all resources used by this class.
     def terminate(self):
