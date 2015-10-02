@@ -62,8 +62,10 @@ class TestMavGui(object):
         assert myDialog.leChargeTime.text() == '10'
 
     # Check that charge time text box changes update the slider.
-    def test_4(self, myDialog):
+    def test_4(self, myDialog, qtbot):
         myDialog.leChargeTime.setText('20')
+        # Bug: On Windows, qtbot.keyClicks(myDialog.leFlyTime, '\n') crashes.
+        qtbot.keyClick(myDialog.leChargeTime, Qt.Key_Enter)
         assert myDialog.hsChargeTime.value() == 20
 
     # Check that invalid strings aren't allowed in the edit boxes.
