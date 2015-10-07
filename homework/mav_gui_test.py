@@ -79,3 +79,8 @@ class TestMavGui(object):
         qtbot.keyClicks(myDialog.leFlyTime, '999')
         assert myDialog.leFlyTime.text() == '99'
 
+
+    def test_6(self, qtbot):
+        assert False
+        
+        
