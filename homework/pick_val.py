@@ -1,6 +1,3 @@
-# changes added for git testing
-
-
 # .. -*- coding: utf-8 -*-
 #
 # *********************************************************
@@ -26,20 +23,18 @@ def pick_val(
   #   index == -2 returns seq[2]. Again, if the list is less than index in
   #   length, return an earlier value.
   index=4):
-    
-    # Check the length of the sequence with the asked index value
-    seqlength = len(seq)
-    myindex = index
-    
-    # Generates a good index value if the passed value is too large.
-    if abs(myindex) > seqlength:
-        myindex = 0 - seqlength
-    # Uses the passed index value
-    else:
-        myindex = 0 - index
-    value = seq[myindex]
-    return value
 
+    # Convert the index (which counts from the end of the list) to the standard
+    # Python index, which counts from the beginning of the list.
+    py_index = -index
+
+    # Keep the index within the range of the list, which is [-n, n - 1] where
+    # n == len(seq).
+    py_index = min(py_index, len(seq) - 1)
+    py_index = max(py_index, -len(seq))
+
+    return seq[py_index]
+#
 # Tests
 # =====
 class TestPickVal(object):
@@ -90,7 +85,7 @@ class TestPickVal(object):
     # Test passing a very large index
     def test_8(self):
         assert pick_val(range(10), 100000000) == 0
-
+#
 # Test driver code
 # ================
 def run_tests():

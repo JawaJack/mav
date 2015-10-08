@@ -25,6 +25,7 @@ These serve as the starting point for homework assignments.
    homework/mav_recharging.py
    homework/mav_recharging_test.py
    homework/mav_gui.py
+   homework/mav_gui_test.py
    homework/unit_test_grader.py
 
 MAV control
