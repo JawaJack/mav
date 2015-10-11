@@ -26,39 +26,6 @@ from PyQt4 import uic
 #
 # Core code
 # =========
-# Overall flow between the Mav_ instances and the ChargingStation_:
-#
-# 1. ChargingStation_ constructs numMavs_, emitting the startMissions_ singal on each one.
-# 2. Each MAV will emit a requestCharge_ signal to the ChargingStation_.
-# 3. When both electrodes are available, the ChargingStation_ will emit an ownsElectrodes_ signal to that MAV.
-# 4. The MAV charges. When done, it emits a finishedCharge_ signal to the ChargingStation_.
-#
-# Overall flow between the MavDialog_ and the Mav_ instances:
-#
-# * Changes to the fly time or charge time slider cause emission an updateFlyTimeSec_ or updateChargeTimeSec_ signal to the appropriate Mav_, based on the currently select Mav_ in the combo box.
-# * Changes to Mav_ state cause emission of an updateMavState_ signal.
-# * When the MavDialog_ is closed, it should terminate ChargingStation_, which should end the Mav_ threads.
-#
-# Enum
-# ----
-# A simple enumerate I like, taken from one of the snippet on `stackoverflow
-# <http://stackoverflow.com/questions/36932/how-can-i-represent-an-enum-in-python>`_.
-# What I want: a set of unique identifiers that will be named nicely,
-# rather than printed as a number. Really, just a way to create a class whose
-# members contain a string representation of their name. Perhaps the best
-# solution is `enum34 <https://pypi.python.org/pypi/enum34>`_, based on `PEP
-# 0435 <https://www.python.org/dev/peps/pep-0435/>`_, but I don't want an extra
-# dependency just for this.
-class Enum(frozenset):
-    def __getattr__(self, name):
-        if name in self:
-            return name
-        raise AttributeError
-#
-# MAV_STATES
-# ----------
-_MAV_STATES = Enum( ('Flying', 'Waiting', 'Charging') )
-#
 # DummyWorker
 # -----------
 # An example of the use of threading. To use this:
@@ -76,89 +43,19 @@ class DummyWorker(QObject):
         super(DummyWorker, self).__init__()
         self.parent = parent
 
-        # Prepare ``when_run`` to run in the parent's thread.
-        self.moveToThread(self.parent._thread)
-        self.run.connect(self.when_run)
-
     @pyqtSlot(float)
     def when_run(self, time_sec):
         print("sleeping for {} seconds.".format(time_sec))
         sleep(time_sec)
         self.parent.hsChargeTime.setValue(50)
 #
-# Mav
-# ---
-# A class which simulates a single MAV. This should be run in a separate thread by the MyDialog class.
-class Mav(QObject):
-    # .. _startMissions:
-    #
-    # This signal tells the class to start flying missions.
-    startMissions = pyqtSignal()
-
-    # .. _updateFlyTimeSec:
-    #
-    # This signal updates the flyTimeSec for the MAV.
-    updateFlyTimeSec = pyqtSignal(float)
-
-    # .. _updateChargeTimeSec:
-    #
-    # This signal updates the chargeTimeSec for this MAV.
-    updateChargeTimeSec = pyqtSignal(float)
-
-    # .. _ownsElectrodes:
-    #
-    # This signal tells the MAV that it has exclusive access to both electrodes in order to charge itself.
-    ownsElectrodes = pyqtSignal()
-
-    def __init__(self,
-      # .. _flyTimeSec:
-      #
-      # Time spent flying on a mission, in seconds.
-      flyTimeSec,
-      # .. _chargeTimeSec:
-      #
-      # Time spent charging, in seconds.
-      chargeTimeSec,
-      # See mavIndex_.
-      mavIndex,
-      # The thread this object should be moved to.
-      thread_,
-      # See requestCharge_.
-      requestCharge,
-      # See finishedCharge_.
-      finishedCharge):
-
-        super(Mav, self).__init__()
-#
-# MavDialog
-# ---------
+# MyDialog
+# --------
 # A dialog box to operate the MAV GUI.
-class MavDialog(QDialog):
-    # .. _updateMavState:
-    #
-    # This signal, sent by a MAV, informs the GUI of the MAV's current state. It simply invokes _on_updateMavState.
-    updateMavState = pyqtSignal(
-      # See mavIndex_.
-      int,
-      # See MAV_STATES_.
-      object)
-
-    def __init__(self,
-      # .. _numMavs:
-      #
-      # The number of MAVs in the simulation.
-      numMavs,
-      # See _flyTimeSec.
-      flyTimeSec,
-      # See _chargeTimeSec.
-      chargeTimeSec):
-
+class MyDialog(QDialog):
+    def __init__(self):
         # First, let the QDialog initialize itself.
-        super(MavDialog, self).__init__()
-
-        # Create a ChargingStation to manage the MAVs.
-        self._chargingStation = ChargingStation(self, numMavs, flyTimeSec,
-                                                chargeTimeSec)
+        super(MyDialog, self).__init__()
 
         # `Load <http://pyqt.sourceforge.net/Docs/PyQt4/designer.html#PyQt4.uic.loadUi>`_
         # in our UI. The secord parameter lods the resulting UI directly into
@@ -174,13 +71,11 @@ class MavDialog(QDialog):
 
         # Create a separate thread
         self._thread = QThread()
-
-        # Example: create a separate thread
-        self._thread = QThread(self)
-
         self._thread.start()
         # Create a worker.
         self._worker = DummyWorker(self)
+        self._worker.moveToThread(self._thread)
+        self._worker.run.connect(self._worker.when_run)
 
         # Timer examples
         # ^^^^^^^^^^^^^^
@@ -193,19 +88,6 @@ class MavDialog(QDialog):
         self._timer.start(3000)
         
         
-
-    # .. _on_updateMavState:
-    #
-    # A standardized way for MAVs to update their status. Should be invoked
-    @pyqtSlot(int, object)
-    def _on_updateMavState(self,
-      # See mavIndex_.
-      mavIndex,
-      # See MAV_STATES_.
-      mavState):
-
-        # Fill this in!
-        pass
 
     @pyqtSlot()
     def _onTimeout(self):
@@ -237,45 +119,7 @@ class MavDialog(QDialog):
         self._thread.quit()
         self._thread.wait()
         self._timer.stop()
-#
-# ChargingStation
-# ---------------
-# This object manages MAV construction and charging.
-class ChargingStation(QObject):
-    # .. _requestCharge:
-    #
-    # This signal, sent by a MAV, requests exclusive access to that MAV's charging electrodes.
-    requestCharge = pyqtSignal(
-      # .. _mavIndex:
-      #
-      # The index of the requesting MAV, from 0 to numMavs - 1.
-      int)
 
-    # .. _finishedCharge:
-    #
-    # This signal, sent by a MAV, releases exclusive access to that MAV's charging electrodes.
-    finishedCharge = pyqtSignal(
-      # See mavIndex_.
-      int)
-
-    def __init__(self,
-      # The parent of this object.
-      parent,
-      # See _numMavs.
-      numMavs,
-      # See _flyTimeSec.
-      flyTimeSec,
-      # See _chargeTimeSec.
-      chargeTimeSec):
-
-        super(ChargingStation, self).__init__(parent)
-
-        self._mav = []
-        self._thread = []
-        for index in range(numMavs):
-            self._thread.append(QThread(self))
-            self._mav.append(Mav(flyTimeSec, chargeTimeSec, index, self._thread[-1],
-                                 self.requestCharge, self.finishedCharge))
 #
 # Main
 # ====
@@ -285,7 +129,7 @@ def main():
     qa = QApplication(sys.argv)
     # Construct the UI: either a `QDialog <http://doc.qt.io/qt-4.8/qdialog.html>`_
     # or a `QMainWindow <http://doc.qt.io/qt-4.8/qmainwindow.html>`_.
-    md = MavDialog(4, 0.5, 1.5)
+    md = MyDialog()
     # The UI is hidden while it's being set up. Now that it's ready, it must be
     # manually shown.
     md.show()
