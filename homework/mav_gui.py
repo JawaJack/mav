@@ -169,16 +169,15 @@ class MavDialog(QDialog):
         flyTimeValidator = QIntValidator(0, 99, self)
         self.leFlyTime.setValidator(flyTimeValidator)
 
-<<<<<<< HEAD
         chargeTimeValidator = QIntValidator(0, 99, self)
         self.leChargeTime.setValidator(chargeTimeValidator)
 
         # Create a separate thread
         self._thread = QThread()
-=======
+
         # Example: create a separate thread
         self._thread = QThread(self)
->>>>>>> upstream/my_stuff
+
         self._thread.start()
         # Create a worker.
         self._worker = DummyWorker(self)
