@@ -64,13 +64,12 @@ class TestMavGui(object):
         assert float(mavDialog.leChargeTime.text()) == 3.5
 
     # Check that charge time text box changes update the slider.
-<<<<<<< HEAD
     def test_4(self, myDialog, qtbot):
         myDialog.leChargeTime.setText('20')
         # Bug: On Windows, qtbot.keyClicks(myDialog.leFlyTime, '\n') crashes.
         qtbot.keyClick(myDialog.leChargeTime, Qt.Key_Enter)
         assert myDialog.hsChargeTime.value() == 20
-=======
+
     def test_4(self, mavDialog, qtbot):
         mavDialog.leChargeTime.setText('4.5')
         qtbot.keyClick(mavDialog.leChargeTime, Qt.Key_Enter)
@@ -86,7 +85,6 @@ class TestMavGui(object):
         mavDialog.leFlyTime.setText('')
         qtbot.keyClicks(mavDialog.leFlyTime, '999')
         assert float(mavDialog.leFlyTime.text()) == 9.0
->>>>>>> upstream/my_stuff
 
     # Check that invalid strings aren't allowed in the edit boxes.
     def test_6(self, mavDialog, qtbot):
@@ -155,10 +153,5 @@ class TestMavGui1(object):
 
         mavDialog.updateMavState.emit(index, _MAV_STATES.Flying)
         assert mavDialog.mavStatus[index].rbFlying.isChecked()
-
-
-
-    def test_6(self, qtbot):
-        assert False
         
         
