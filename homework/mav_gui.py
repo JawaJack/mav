@@ -107,7 +107,7 @@ class Mav(QObject):
 
     # .. _ownsElectrodes:
     #
-    # This signal tells the MAV that it has exclusive access to both electrodes in order to charge itself.
+    # This signal tells the MAV that it has exclusive access to both electrodes in order to charge           itself.
     ownsElectrodes = pyqtSignal()
 
     def __init__(self,
@@ -188,7 +188,6 @@ class MavDialog(QDialog):
         self.cbSelectedMav.addItem('MAV 3')
         self.cbSelectedMav.addItem('MAV 4')
 
-
         # Example: create a separate thread
         self._thread = QThread(self)
         self._thread.start()
@@ -204,7 +203,6 @@ class MavDialog(QDialog):
         self._timer.timeout.connect(self._onTimeout)
         self._timer.setSingleShot(True)
         self._timer.start(3000)
-        
         
         # Set the initial value of the sliders
         self.hsFlyTime.setValue(int(float(flyTimeSec)*10))
@@ -229,8 +227,6 @@ class MavDialog(QDialog):
         elif mavIndex == 3:
             pass
         pass
-    
-
     
     @pyqtSlot()
     def _onTimeout(self):
@@ -261,6 +257,7 @@ class MavDialog(QDialog):
         self._thread.quit()
         self._thread.wait()
         self._timer.stop()
+        
 #
 # ChargingStation
 # ---------------
