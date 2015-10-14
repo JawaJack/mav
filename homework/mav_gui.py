@@ -20,12 +20,9 @@ import sip
 sip.setapi('QString', 2)
 sip.setapi('QVariant', 2)
 
-<<<<<<< HEAD
 from PyQt4.QtGui import QApplication, QDialog, QIntValidator, QDoubleValidator,QComboBox
-=======
 from PyQt4.QtGui import QApplication, QDialog, QDoubleValidator
 from PyQt4.QtGui import QGroupBox, QRadioButton, QVBoxLayout, QHBoxLayout
->>>>>>> upstream/my_stuff
 from PyQt4.QtCore import QTimer, QThread, QObject, pyqtSignal, pyqtSlot
 from PyQt4 import uic
 #
@@ -220,13 +217,11 @@ class MavDialog(QDialog):
         uic.loadUi(join(dirname(__file__), 'mav_gui.ui'), self)
 
         # Only allow numbers between 0 and 99 for the line edits.
-<<<<<<< HEAD
         flyTimeValidator = QDoubleValidator(0, 9.9, 1, self)
         flyTimeValidator.setNotation(0)
-=======
+
         flyTimeValidator = QDoubleValidator(0.0, 9.9, 1, self)
         flyTimeValidator.setNotation(QDoubleValidator.StandardNotation)
->>>>>>> upstream/my_stuff
         self.leFlyTime.setValidator(flyTimeValidator)
         chargeTimeValidator = QDoubleValidator(0.0, 9.9, 1, self)
         chargeTimeValidator.setNotation(QDoubleValidator.StandardNotation)
@@ -309,7 +304,6 @@ class MavDialog(QDialog):
       # See MAV_STATES_.
       mavState):
 
-<<<<<<< HEAD
         if mavIndex == 0:
             pass
         elif mavIndex == 1:
@@ -320,7 +314,6 @@ class MavDialog(QDialog):
             pass
         pass
     
-=======
         # Make only one of the radio buttons checkable, so that the user can't check a different one.
         ms = self.mavStatus[mavIndex]
         if mavState == _MAV_STATES.Waiting:
@@ -341,27 +334,26 @@ class MavDialog(QDialog):
         else:
             assert False
 
->>>>>>> upstream/my_stuff
     @pyqtSlot()
     def _onTimeout(self):
         self.hsFlyTime.setValue(50)
 
     @pyqtSlot(int)
     def on_hsFlyTime_valueChanged(self, value):
-<<<<<<< HEAD
+
         self.leFlyTime.setText(str(float(value)/10))
         Mav.updateChargeTimeSec(float(value)/10)
-=======
+
         flyTimeSec = value/10.0
         self._chargingStation._mav[self.cbSelectedMav.currentIndex()].updateFlyTimeSec.emit(flyTimeSec)
         self.leFlyTime.setText(str(flyTimeSec))
         self._flyTimeSec[self.cbSelectedMav.currentIndex()] = flyTimeSec
->>>>>>> upstream/my_stuff
+
         self._worker.run.emit(1.5)
 
     @pyqtSlot()
     def on_leFlyTime_editingFinished(self):
-<<<<<<< HEAD
+
         self.hsFlyTime.setValue(int(float(self.leFlyTime.text())*10))
 
     @pyqtSlot()
@@ -373,7 +365,7 @@ class MavDialog(QDialog):
         self.leChargeTime.setText(str(float(value)/10))
         Mav.updateChargeTimeSec(float(value)/10)
         self._worker.run.emit(1.5)
-=======
+
         self.hsFlyTime.setValue(float(self.leFlyTime.text())*10.0)
 
     @pyqtSlot(int)
@@ -392,7 +384,7 @@ class MavDialog(QDialog):
     def on_cbSelectedMav_currentIndexChanged(self, index):
         self.hsChargeTime.setValue(self._chargeTimeSec[index]*10)
         self.hsFlyTime.setValue(self._flyTimeSec[index]*10)
->>>>>>> upstream/my_stuff
+
 
     # Free all resources used by this class.
     def terminate(self):
