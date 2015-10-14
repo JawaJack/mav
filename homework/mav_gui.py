@@ -20,7 +20,12 @@ import sip
 sip.setapi('QString', 2)
 sip.setapi('QVariant', 2)
 
+<<<<<<< HEAD
 from PyQt4.QtGui import QApplication, QDialog, QIntValidator, QDoubleValidator,QComboBox
+=======
+from PyQt4.QtGui import QApplication, QDialog, QDoubleValidator
+from PyQt4.QtGui import QGroupBox, QRadioButton, QVBoxLayout, QHBoxLayout
+>>>>>>> upstream/my_stuff
 from PyQt4.QtCore import QTimer, QThread, QObject, pyqtSignal, pyqtSlot
 from PyQt4 import uic
 #
@@ -85,6 +90,47 @@ class DummyWorker(QObject):
         print("sleeping for {} seconds.".format(time_sec))
         sleep(time_sec)
         self.parent.hsChargeTime.setValue(50)
+#
+# MavWorker
+# ---------
+# This object simulates a single MAV.
+class MavWorker(QObject):
+    # This causes the simulation to begin.
+    run = pyqtSignal()
+
+    def __init__(self,
+      # The MyDialog which contains the GUI.
+      parent,
+      # The index of this MAV, for use in updating the GUI.
+      index):
+
+        self._parent = parent
+        self._index = index
+
+    # Fly a series of missions.
+    def fly_mission(self):
+        self._parent.update_state()
+        sleep(self._fly_time_sec)
+
+        self._state = _MAV_STATES.Waiting
+        with self._left_electrode, self._right_electrode:
+            self._state = _MAV_STATES.Charging
+            sleep(self._charge_time_sec)
+        self.run.emit()
+#
+# SingleMavWidget
+# ---------------
+# A helper class to organize each MAV's status.
+class SingleMavWidget(object):
+    pass
+#
+# UncheckableRadioButton
+# ----------------------
+# A helper class to create an uncheckable radio button.
+class UncheckableRadioButton(QRadioButton):
+    def __init__(self, *args, **kwargs):
+        super(UncheckableRadioButton, self).__init__(*args, **kwargs)
+        self.setCheckable(False)
 #
 # Mav
 # ---
@@ -174,9 +220,17 @@ class MavDialog(QDialog):
         uic.loadUi(join(dirname(__file__), 'mav_gui.ui'), self)
 
         # Only allow numbers between 0 and 99 for the line edits.
+<<<<<<< HEAD
         flyTimeValidator = QDoubleValidator(0, 9.9, 1, self)
         flyTimeValidator.setNotation(0)
+=======
+        flyTimeValidator = QDoubleValidator(0.0, 9.9, 1, self)
+        flyTimeValidator.setNotation(QDoubleValidator.StandardNotation)
+>>>>>>> upstream/my_stuff
         self.leFlyTime.setValidator(flyTimeValidator)
+        chargeTimeValidator = QDoubleValidator(0.0, 9.9, 1, self)
+        chargeTimeValidator.setNotation(QDoubleValidator.StandardNotation)
+        self.leChargeTime.setValidator(chargeTimeValidator)
 
         chargeTimeValidator = QDoubleValidator( 0, 9.9, 1, self)
         chargeTimeValidator.setNotation(0)
@@ -190,7 +244,7 @@ class MavDialog(QDialog):
 
         # Example: create a separate thread
         self._thread = QThread(self)
-        self._thread.start()
+        #self._thread.start()
         # Create a worker.
         self._worker = DummyWorker(self)
 
@@ -208,6 +262,43 @@ class MavDialog(QDialog):
         self.hsFlyTime.setValue(int(float(flyTimeSec)*10))
         self.hsChargeTime.setValue(int(float(chargeTimeSec)*10))
 
+        # Add in status info GUI for numMavs MAVs.
+        hl = QHBoxLayout()
+        self.wMavStatus.setLayout(hl)
+        assert numMavs > 0
+        self.numMavs = numMavs
+        self.mavStatus = []
+        self.electrodeStatus = []
+        self._chargeTimeSec = [chargeTimeSec]*self.numMavs
+        self._flyTimeSec = [flyTimeSec]*self.numMavs
+        for index in range(self.numMavs):
+            e = UncheckableRadioButton(self)
+            self.electrodeStatus.append(e)
+            hl.addWidget(e)
+
+            # Add in a group box.
+            smw = SingleMavWidget()
+            mavName = 'MAV {}'.format(index + 1)
+            smw.gb = QGroupBox(mavName, self.wMavStatus)
+            vl = QVBoxLayout()
+            smw.gb.setLayout(vl)
+            smw.rbFlying = UncheckableRadioButton('Flying', smw.gb)
+            smw.rbWaiting = UncheckableRadioButton('Waiting', smw.gb)
+            smw.rbCharging = UncheckableRadioButton('Charging', smw.gb)
+            vl.addWidget(smw.rbFlying)
+            vl.addWidget(smw.rbWaiting)
+            vl.addWidget(smw.rbCharging)
+            self.mavStatus.append(smw)
+            hl.addWidget(smw.gb)
+
+            # Update the combo box.
+            self.cbSelectedMav.insertItem(index, mavName)
+
+        # Update GUI with parameters.
+        self.on_cbSelectedMav_currentIndexChanged(0)
+
+        self.updateMavState.connect(self._on_updateMavState)
+
     # .. _on_updateMavState:
     #
     # A standardized way for MAVs to update their status. Should be invoked
@@ -218,6 +309,7 @@ class MavDialog(QDialog):
       # See MAV_STATES_.
       mavState):
 
+<<<<<<< HEAD
         if mavIndex == 0:
             pass
         elif mavIndex == 1:
@@ -228,18 +320,48 @@ class MavDialog(QDialog):
             pass
         pass
     
+=======
+        # Make only one of the radio buttons checkable, so that the user can't check a different one.
+        ms = self.mavStatus[mavIndex]
+        if mavState == _MAV_STATES.Waiting:
+            ms.rbWaiting.setCheckable(True)
+            ms.rbFlying.setCheckable(False)
+            ms.rbCharging.setCheckable(False)
+            ms.rbWaiting.setChecked(True)
+        elif mavState == _MAV_STATES.Flying:
+            ms.rbWaiting.setCheckable(False)
+            ms.rbFlying.setCheckable(True)
+            ms.rbCharging.setCheckable(False)
+            self.mavStatus[mavIndex].rbFlying.setChecked(True)
+        elif mavState == _MAV_STATES.Charging:
+            ms.rbWaiting.setCheckable(False)
+            ms.rbFlying.setCheckable(False)
+            ms.rbCharging.setCheckable(True)
+            self.mavStatus[mavIndex].rbCharging.setChecked(True)
+        else:
+            assert False
+
+>>>>>>> upstream/my_stuff
     @pyqtSlot()
     def _onTimeout(self):
         self.hsFlyTime.setValue(50)
 
     @pyqtSlot(int)
     def on_hsFlyTime_valueChanged(self, value):
+<<<<<<< HEAD
         self.leFlyTime.setText(str(float(value)/10))
         Mav.updateChargeTimeSec(float(value)/10)
+=======
+        flyTimeSec = value/10.0
+        self._chargingStation._mav[self.cbSelectedMav.currentIndex()].updateFlyTimeSec.emit(flyTimeSec)
+        self.leFlyTime.setText(str(flyTimeSec))
+        self._flyTimeSec[self.cbSelectedMav.currentIndex()] = flyTimeSec
+>>>>>>> upstream/my_stuff
         self._worker.run.emit(1.5)
 
     @pyqtSlot()
     def on_leFlyTime_editingFinished(self):
+<<<<<<< HEAD
         self.hsFlyTime.setValue(int(float(self.leFlyTime.text())*10))
 
     @pyqtSlot()
@@ -251,6 +373,26 @@ class MavDialog(QDialog):
         self.leChargeTime.setText(str(float(value)/10))
         Mav.updateChargeTimeSec(float(value)/10)
         self._worker.run.emit(1.5)
+=======
+        self.hsFlyTime.setValue(float(self.leFlyTime.text())*10.0)
+
+    @pyqtSlot(int)
+    def on_hsChargeTime_valueChanged(self, value):
+        chargeTimeSec = value/10.0
+        self._chargingStation._mav[self.cbSelectedMav.currentIndex()].updateChargeTimeSec.emit(chargeTimeSec)
+        self.leChargeTime.setText(str(chargeTimeSec))
+        self._chargeTimeSec[self.cbSelectedMav.currentIndex()] = chargeTimeSec
+        self._worker.run.emit(1.5)
+
+    @pyqtSlot()
+    def on_leChargeTime_editingFinished(self):
+        self.hsChargeTime.setValue(float(self.leChargeTime.text())*10.0)
+
+    @pyqtSlot(int)
+    def on_cbSelectedMav_currentIndexChanged(self, index):
+        self.hsChargeTime.setValue(self._chargeTimeSec[index]*10)
+        self.hsFlyTime.setValue(self._flyTimeSec[index]*10)
+>>>>>>> upstream/my_stuff
 
     # Free all resources used by this class.
     def terminate(self):
@@ -307,7 +449,7 @@ def main():
     qa = QApplication(sys.argv)
     # Construct the UI: either a `QDialog <http://doc.qt.io/qt-4.8/qdialog.html>`_
     # or a `QMainWindow <http://doc.qt.io/qt-4.8/qmainwindow.html>`_.
-    md = MavDialog(4, 0.5, 1.5)
+    md = MavDialog(int(sys.argv[1]), 0.5, 1.5)
     # The UI is hidden while it's being set up. Now that it's ready, it must be
     # manually shown.
     md.show()

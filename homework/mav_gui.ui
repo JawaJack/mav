@@ -6,14 +6,17 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>650</width>
-    <height>333</height>
+    <width>408</width>
+    <height>198</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QWidget" name="wMavStatus" native="true"/>
+   </item>
    <item>
     <widget class="QGroupBox" name="groupBox">
      <property name="title">

@@ -4,7 +4,7 @@
 # ================
 # By Bryan A. Jones.
 #
-# This function runs a series of pytest_ unit tests (by calling the ``run_tests()`` function of ``unit_tester_module_name``) on each file in the ``unit_testee_directory`` and reports its results in ``csv_file_name``. The files to be tested must be named ``stuff_userid_[stuff].py``. The tester must output test results in XML.
+# This function runs a series of pytest_ unit tests (by calling the ``run_tests()`` function of ``unit_tester_module_name``) on each file in the ``unit_testee_directory`` and reports its results in ``csv_file_name``. The files to be tested must be named ``stuff_userid_[stuff].py``.
 #
 # .. warning::
 #
@@ -12,24 +12,22 @@
 #
 # Setup
 # -----
-import os, shutil, xml.dom.minidom, csv, importlib
+import os, shutil, xml.dom.minidom, csv, importlib, subprocess
+
 def run_all_testees(
   # Specify the module which performs unit tests.
-  unit_tester_module_name = 'mav_recharging_test',
+  unit_tester_module_name = 'mav_gui_test',
   # Specify the module tested by ``unit_test_module_name``.
-  orig_unit_testee_module_name = 'mav_recharging',
+  orig_unit_testee_module_name = 'mav_gui',
   # Specify the directory containing the testees (modules to on which unit tests in ``unit_tester_module_name`` will be run).
   unit_testee_directory = 'hw_grading',
   # Name of the .csv file to produce.
   csv_file_name = 'grades.csv'):
 
-    # Import_ the tester and testee, a reqirement before calling `reload()`_.
-    orig_unit_testee_module = importlib.import_module(orig_unit_testee_module_name)
-    unit_tester_module = importlib.import_module(unit_tester_module_name)
     # Open a ``.csv`` file to store results in and write the header.
     with open(csv_file_name, 'wb') as csvfile:
         grade_writer = csv.writer(csvfile)
-        grade_writer.writerow(('User ID', 'Grade'))
+        grade_writer.writerow(('Username', 'Homework 6 |267338'))
         #
         # Choose and copy a file to test
         # ------------------------------
@@ -47,21 +45,14 @@ def run_all_testees(
             #
             # Run tests
             # ---------
-            # Without this, Python's `reload()`_ re-imports the same testee module, instead of the newly copied version, probably because the .pyc files is check with a 1-second resolution (see `Stack Overflow question`_). So, remove_ the ``.pyc``. The tester bytecode remains the same, so it doesn't need removal. If the previous file tested had a syntax error, there's no .pyc to remove; use try/except to ignore this.
+            # Without this, Python re-imports the same testee module, instead of the newly copied version, probably because the .pyc files is check with a 1-second resolution (see `Stack Overflow question`_). So, remove_ the ``.pyc``. The tester bytecode remains the same, so it doesn't need removal. If the previous file tested had a syntax error, there's no .pyc to remove; use try/except to ignore this.
             try:
                 os.remove(orig_unit_testee_module_name + '.pyc')
             except OSError as e:
                 print(e)
-            # `Reload <reload()>`_ this modified file -- both the testee (which defines routines to be tested) and the tester (since it needs to be redefined with a revised set of imported testee modules).
-            try:
-                reload(orig_unit_testee_module)
-            except SyntaxError as e:
-                print(e)
-                continue
-            reload(unit_tester_module)
             # Run the tests.
             print('\n\n\n\nRunning tests on ' + unit_testee_module_path)
-            unit_tester_module.run_tests()
+            subprocess.call('py.test ' + unit_tester_module_name + '.py --junitxml=unit_test.xml', shell=True)
             #
             # Collect results
             # ---------------
@@ -91,12 +82,10 @@ def run_all_testees(
 if __name__ == '__main__':
     run_all_testees()
 
-# .. _reload(): http://docs.python.org/2/library/functions.html#reload
 # .. _split: http://docs.python.org/2/library/stdtypes.html#str.split
 # .. _copy: http://docs.python.org/2/library/shutil.html#directory-and-files-operations
 # .. _XML parser: http://docs.python.org/2/library/xml.dom.minidom.html
 # .. _pytest to produce XML output: http://pytest.org/latest/usage.html#creating-junitxml-format-files
-# .. _import: http://docs.python.org/2/library/importlib.html#importlib.import_module
 # .. _listdir: http://docs.python.org/2/library/os.html#files-and-directories
 # .. _Stack Overflow question: http://stackoverflow.com/questions/10561349/python-reload-module-does-not-take-effect-immediately
 # .. _remove: http://docs.python.org/2/library/os.html#files-and-directories
